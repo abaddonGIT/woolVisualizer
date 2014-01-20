@@ -8,6 +8,10 @@ w.onload = function () {
             MAX: 80,
             MIN: 10
         },
+        SIZE = {
+            MIN: 0.5,
+            MAX: 1.25
+        },
         OPACITY = {
             MAX: 1,
             MIN: 0.4
@@ -22,19 +26,21 @@ w.onload = function () {
     * @return {Object}
     */
     var Particle = function (x, y) {
-        this.init( x, y);
+        this.init(x, y);
     };
 
     Particle.prototype = {
         //Параметры создаваемой частицы
-        init: function( x, y ) {
-            this.radius = random(RADIUS.MIN, RADIUS.MAX);//радиус частиц
-            this.color = random(COLORS);//цвет частицы
+        init: function (x, y) {
+            this.radius = random(RADIUS.MIN, RADIUS.MAX); //радиус частиц
+            this.color = random(COLORS); //цвет частицы
             this.opacity = random(OPACITY.MIN, OPACITY.MAX);
             this.x = x;
             this.y = y;
+            this.size = random(SIZE.MIN, SIZE.MAX);
         },
-        draw: function( ctx ) {
+        draw: function (ctx) {
+            /*
             ctx.save();
             ctx.beginPath();//Начинает отрисовку фигуры
             ctx.arc( this.x, this.y, this.radius, 0, TWO_PI );
@@ -43,6 +49,20 @@ w.onload = function () {
             ctx.fill();
             ctx.stroke();//завершаем отрисовку
             ctx.restore();
+            */
+            ctx.save();
+            ctx.beginPath();
+            ctx.translate(this.x, this.y);
+            //ctx.rotate(this.rotation);
+            ctx.scale(20, 10);
+            ctx.moveTo(this.size * 0.5, 0);
+            ctx.lineTo(this.size * -0.5, 0);
+            ctx.lineWidth = 1;
+            ctx.lineCap = 'round';
+            //ctx.globalAlpha = this.smoothedAlpha / this.level;
+            ctx.strokeStyle = this.color;
+            ctx.stroke();
+            ctx.restore();
         },
         move: function () {
             this.y -= random(0.2, 0.5);
@@ -50,8 +70,8 @@ w.onload = function () {
             //Возврашам в начало частицы которые ушли за пределы хослста
             if (this.y < -100) {
                 this.y = region.height;
-            }  
-         }
+            }
+        }
     }
 
     var region = Sketch.create({
@@ -78,9 +98,9 @@ w.onload = function () {
         var len = this.particles.length;
 
         while (len--) {
-            this.particles[len].draw(region);//создание частиц
-            this.particles[len].move();//движение
+            this.particles[len].move(); //движение
+            this.particles[len].draw(region); //создание частиц
         }
-        
+
     };
 };
