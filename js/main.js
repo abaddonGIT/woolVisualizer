@@ -3,8 +3,17 @@ var w = window,
 
 w.onload = function () {
     var target = d.querySelector('#target'),
-        MAX_PARTICLES = 200, //максимально количество частиц
+        MAX_PARTICLES = 150, //максимально количество частиц
+        RADIUS = {
+            MAX: 80,
+            MIN: 10
+        },
+        OPACITY = {
+            MAX: 1,
+            MIN: 0.4
+        },
         COLORS = ['#69D2E7', '#A7DBD8', '#E0E4CC', '#F38630', '#FA6900', '#FF4E50', '#F9D423']; //цвета частиц
+
 
     /*
     * Создание частицы
@@ -13,36 +22,35 @@ w.onload = function () {
     * @return {Object}
     */
     var Particle = function (x, y) {
-        this.init( x, y, random( 5, 40 ) );
+        this.init( x, y);
     };
 
     Particle.prototype = {
+        //Параметры создаваемой частицы
+        init: function( x, y ) {
+            this.radius = random(RADIUS.MIN, RADIUS.MAX);//радиус частиц
+            this.color = random(COLORS);//цвет частицы
+            this.opacity = random(OPACITY.MIN, OPACITY.MAX);
+            this.x = x;
+            this.y = y;
+        },
         draw: function( ctx ) {
+            ctx.save();
+            ctx.beginPath();//Начинает отрисовку фигуры
+            ctx.arc( this.x, this.y, this.radius, 0, TWO_PI );
+            ctx.fillStyle = this.color;//цвет
+            ctx.globalAlpha = this.opacity;//прозрачность
+            ctx.fill();
+            ctx.stroke();//завершаем отрисовку
+            ctx.restore();
+        },
+        move: function () {
+            this.y -= random(0.2, 0.5);
 
-                ctx.beginPath();
-                ctx.arc( this.x, this.y, this.radius, 0, TWO_PI );
-                ctx.fillStyle = this.color;
-                ctx.fill();
-            },
-        init: function( x, y, radius ) {
-
-                this.alive = true;
-
-                this.radius = radius || 10;
-                this.wander = 0.15;
-                this.theta = random( TWO_PI );
-                this.drag = 0.92;
-                this.color = random(COLORS);
-
-                this.x = x || 0.0;
-                this.y = y || 0.0;
-
-                this.vx = 0.0;
-                this.vy = 0.0;
-         },
-         move: function () {
-             this.x += random(0.2,1);
-             this.y += random(0.2,1);
+            //Возврашам в начало частицы которые ушли за пределы хослста
+            if (this.y < -100) {
+                this.y = region.height;
+            }  
          }
     }
 
@@ -70,7 +78,8 @@ w.onload = function () {
         var len = this.particles.length;
 
         while (len--) {
-            this.particles[len].draw(region);
+            this.particles[len].draw(region);//создание частиц
+            this.particles[len].move();//движение
         }
         
     };
