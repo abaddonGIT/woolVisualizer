@@ -37,7 +37,12 @@ w.onload = function () {
             this.opacity = random(OPACITY.MIN, OPACITY.MAX);
             this.x = x;
             this.y = y;
+<<<<<<< HEAD
+
+            this.vx = 0.0;
+=======
             this.size = random(SIZE.MIN, SIZE.MAX);
+>>>>>>> 164ac1b7821221326eac3fadaad98efb4b4fcadb
         },
         draw: function (ctx) {
             /*
@@ -66,7 +71,6 @@ w.onload = function () {
         },
         move: function () {
             this.y -= random(0.2, 0.5);
-
             //Возврашам в начало частицы которые ушли за пределы хослста
             if (this.y < -100) {
                 this.y = region.height;
