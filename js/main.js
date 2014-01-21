@@ -33,6 +33,8 @@ w.onload = function () {
             this.opacity = random(OPACITY.MIN, OPACITY.MAX);
             this.x = x;
             this.y = y;
+
+            this.vx = 0.0;
         },
         draw: function( ctx ) {
             ctx.save();
@@ -46,7 +48,6 @@ w.onload = function () {
         },
         move: function () {
             this.y -= random(0.2, 0.5);
-
             //Возврашам в начало частицы которые ушли за пределы хослста
             if (this.y < -100) {
                 this.y = region.height;
