@@ -1,10 +1,21 @@
 body {
     margin: 0;
     padding: 0;
+    height: 100%;
+    width: 100%;
 }
 
 audio {
     position: absolute;
     top:  20px;
     left: 20px;
+}
+
+#target {
+	width: 100%;
+	height: 100%;
+}
+
+canvas {
+	display: block;
 }

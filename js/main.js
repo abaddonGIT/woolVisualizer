@@ -1,166 +1,232 @@
 var w = window,
-    d = document;
-
-//Создаем елемент audio
-//audio
-
-w.onload = function () {
-    var target = d.querySelector('#target'),
-        MAX_PARTICLES = 150, //максимально количество частиц
-        SMOOTHING = 0.3,
-        FURIE = 512,
-    //FILE_PATH = 'files/test.mp3',
+    d = document,
+    MP3_PATH = 'files/test.mp3',
+    MAX_PARTICLES = 110,
+    TWO_PI = Math.PI * 2,
+    SMOOTHING = 0.3,
+    FURIE = 512,
     RADIUS = {
-        MAX: 80,
-        MIN: 10
+        MAX: 80.0,
+        MIN: 10.0
     },
-        SIZE = {
-            MIN: 0.5,
-            MAX: 1.25
-        },
-        OPACITY = {
-            MAX: 1,
-            MIN: 0.4
-        },
-        COLORS = ['#69D2E7', '#A7DBD8', '#E0E4CC', '#F38630', '#FA6900', '#FF4E50', '#F9D423']; //цвета частиц
+    SIZE = {
+        MIN: 0.5,
+        MAX: 1.25
+    },
+    OPACITY = {
+        MIN: 0.4,
+        MAX: 0.8
+    },
+    SPEED = {
+        MIN: 0.2,
+        MAX: 1
+    },
+    COLORS = ['#69D2E7', '#A7DBD8', '#E0E4CC', '#F38630', '#FA6900', '#FF4E50', '#F9D423']; //цвета частиц
 
 
-    var Analyser = function () {
-        //Новый контекст
-        var context = null,
-            analyser = null,
-            sourse = null,
-            node = null,
-            bands = null,
-            source = null,
-            AudioContext = w.AudioContext || w.webkitAudioContext,
-            that = this;
+var WoolAnalaser = function () {
+    var ctx = null,
+        canva = null,
+        config = null,
+        particles = [],
+        audio = null;
+        that = this;
 
-        var audio = new Audio();
-        audio.src = 'files/test.mp3';
-        audio.controls = true;
 
-        context = new AudioContext();
-        node = context.createJavaScriptNode(2048, 1, 1);
+    config = this.config = {
+        fullscreen: true,
+        interval: 33,
+        type: "canvas"
+    };
+    /*
+    * Конструктор анализатора
+    */
+    var Analyse = function () {
+        var _that = this,
+            AudioContext = w.AudioContext || w.webkitAudioContext;
+
+        this.audio = new Audio();
+        this.audio.src = MP3_PATH;
+        this.audio.controls = true;
+
+        this.context = new AudioContext();
+        this.node = this.context.createJavaScriptNode(2048, 1, 1);
         //Анализатор
-        analyser = context.createAnalyser();
-        analyser.smoothingTimeConstant = SMOOTHING;
-        analyser.fftSize = FURIE;
+        this.analyser = this.context.createAnalyser();
+        this.analyser.smoothingTimeConstant = SMOOTHING;
+        this.analyser.fftSize = FURIE;
 
-        bands = new Uint8Array(analyser.frequencyBinCount);
+        this.bands = new Uint8Array(this.analyser.frequencyBinCount);
 
-        audio.addEventListener('canplay', function () {
-            source = context.createMediaElementSource(audio);
-            source.connect(analyser);
-            analyser.connect(node);
-            node.connect(context.destination);
-            source.connect(context.destination);
+        this.audio.addEventListener('canplay', function () {
+            _that.source = _that.context.createMediaElementSource(_that.audio);
+            _that.source.connect(_that.analyser);
+            _that.analyser.connect(_that.node);
+            _that.node.connect(_that.context.destination);
+            _that.source.connect(_that.context.destination);
 
-            node.onaudioprocess = function () {
-                analyser.getByteFrequencyData(bands);
-                if (!audio.paused) {
-                    return typeof that.update === "function" ? that.update(bands) : 0;
+            _that.node.onaudioprocess = function () {
+                _that.analyser.getByteFrequencyData(_that.bands);
+                if (!_that.audio.paused) {
+                    //console.log(_that.bands);
+                    return typeof _that.update === "function" ? _that.update(_that.bands) : 0;
                 }
             };
         });
-        d.body.appendChild(audio);
-        return that;
+        d.body.appendChild(_that.audio);
+        
+        return this;    
     };
 
     /*
-    * Создание частицы
-    * @param {int} x - координата по x
-    * @param {int} y - координата по y
-    * @return {Object}
+    * Кконструктор частиц
     */
-    var Particle = function (x, y) {
-        this.init(x, y);
+    var Particle = function () {
+        this.init();
     };
 
     Particle.prototype = {
-        //Параметры создаваемой частицы
-        init: function (x, y) {
-            this.radius = random(RADIUS.MIN, RADIUS.MAX); //радиус частиц
-            this.color = random(COLORS); //цвет частицы
-            this.opacity = random(OPACITY.MIN, OPACITY.MAX);
-            this.band = floor(random(128));
-            this.x = x;
-            this.y = y;
-            this.size = random(SIZE.MIN, SIZE.MAX);
+        /*
+        * Создает частицу
+        */
+        init: function () {
+            this.x = that.random(canva.width);
+            this.y = that.random(canva.height);
+            this.level = 1 * that.random(4);
+            this.speed = that.random(SPEED.MIN, SPEED.MAX);
+            this.radius = that.random(RADIUS.MIN, RADIUS.MAX); //радиус частиц
+            this.color = that.random(COLORS); //цвет частицы
+            this.opacity = that.random(OPACITY.MIN, OPACITY.MAX);
+            this.band = Math.floor(that.random(128));
         },
-        draw: function (ctx) {
-
+        /*
+        * Рисует частицу в конве
+        */
+        draw: function () {
+            var pulsar, scale;
+            pulsar = Math.exp(this.pulse);
+            scale = pulsar * this.radius || this.radius;
             ctx.save();
             ctx.beginPath(); //Начинает отрисовку фигуры
-            ctx.arc(this.x, this.y, this.radius, 0, TWO_PI);
+            ctx.arc(this.x, this.y, scale, 0, TWO_PI);
             ctx.fillStyle = this.color; //цвет
-            ctx.globalAlpha = this.opacity; //прозрачность
+            ctx.globalAlpha = this.opacity/this.level; //прозрачность
+            ctx.closePath();
             ctx.fill();
-            ctx.stroke(); //завершаем отрисовку
-            ctx.restore();
-            /*
-            ctx.save();
-            ctx.beginPath();
-            ctx.translate(this.x, this.y);
-            //ctx.rotate(this.rotation);
-            ctx.scale(20, 10);
-            ctx.moveTo(this.size * 0.5, 0);
-            ctx.lineTo(this.size * -0.5, 0);
-            ctx.lineWidth = 1;
-            ctx.lineCap = 'round';
-            //ctx.globalAlpha = this.smoothedAlpha / this.level;
-            ctx.strokeStyle = this.color;
-            ctx.stroke();
-            ctx.restore();*/
+            ctx.strokeStyle = this.color;//цвет рамки
+            ctx.stroke(); 
+            ctx.restore();    
+        
+            this.move();
         },
+        /*
+        * Движение частицы
+        */
         move: function () {
-            this.y -= random(0.2, 0.5);
-
+            this.y -= this.speed * this.level;
+            //this.x += this.speed * this.level;
             //Возврашам в начало частицы которые ушли за пределы хослста
             if (this.y < -100) {
-                this.y = region.height;
-            }
+                this.y = canva.height;
+            } 
         }
     }
+    /*
+    * Создает конву
+    */
+    this.init = function (contener) {
+        ctx = this.createCanvas(contener);
+        canva = ctx.canvas;
+        this.createParticles();
+    };
+    /*
+    * Создает частицы
+    */
+    this.createParticles = function () {
+        var particle = null, audio = null;
 
-    var region = Sketch.create({
-        container: target//создаем конву
-    });
-
-    region.particles = [];
-
-    region.setup = function () {
-        var x = null,
-            y = null,
-            particle = null;
-
-        //создание частиц
         for (var i = 0; i < MAX_PARTICLES; i++) {
-            x = random(this.width);
-            y = random(this.height * 2); //появление на пределами области
-            particle = new Particle(x, y);
-            this.particles.push(particle);
+            particle = new Particle();
+            particles.push(particle);
         }
-        var audio = new Analyser();
-
-        audio.update = function (bands) {
-            var ln = region.particles.length;
+        audio = new Analyse();
+        audio.update = function(bands) {
+            var ln = MAX_PARTICLES;
 
             while (ln--) {
-                var loc = region.particles[ln];
+                var loc = particles[ln];
                 loc.pulse = bands[loc.band]/256;
             }
         };
+        setInterval(that.action, this.config.interval);
+    }
+    /*
+    * Добавляет частицы в конву и анимирует их
+    */
+    this.action = function () {
+        var ln = MAX_PARTICLES;
+        that.clear();
+        for (var i = 0; i < ln; i++) {
+            var loc = particles[i];
+            loc.draw();
+        } 
+    }
+    /*
+    * Чистит конву перед следующей анимацией
+    */
+    this.clear = function () {
+        ctx.clearRect(0, 0, canva.width, canva.height);
     };
+};
 
-    region.draw = function () {
-        var len = this.particles.length;
+WoolAnalaser.prototype = {
+    /*
+    * Создает конву на странице
+    * @param {Object} contener - dom объект элемента для вставки конвы
+    * @return {Object} context - контекст созданной конвы
+    */
+    createCanvas: function (contener) {
+        var config = this.config,
+            canvas = null,
+            context = null;
 
-        while (len--) {
-            //console.log(this.particles[len].pulse);
-            this.particles[len].move(); //движение
-            this.particles[len].draw(region); //создание частиц
+        canvas = d.createElement('canvas'),
+        context = canvas.getContext('2d');
+
+        if (config.fullscreen) {
+            canvas.width = w.innerWidth;
+            canvas.height = w.innerHeight;
         }
+        (contener || d.body).appendChild(canvas);
+        return context;
+    },
+    /*
+    * Выбор рандомного значения
+    */
+    random: function( min, max ) {
+        if (this.isArray( min )) {
+            return min[ ~~( Math.random() * min.length ) ];
+        }
+        if (!this.isNumber(max)) {
+            max = min || 1, min = 0;
+        }
+        return min + Math.random() * ( max - min ); 
+    },
+    /*
+    * Проверка на массив
+    */
+    isArray: function(object) {
+        return Object.prototype.toString.call( object ) == '[object Array]';
+    },
+    /*
+    * Проверка на число
+    */
+    isNumber: function(object) {
+        return typeof object == 'number';
+    }
+};
 
-    };
+w.onload = function () {
+    var analyser = new WoolAnalaser ();
+    analyser.init(d.querySelector('#target'));
 };
