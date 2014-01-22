@@ -11,6 +11,12 @@ audio {
     left: 20px;
 }
 
+#song {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+}
+
 #target {
 	width: 100%;
 	height: 100%;
