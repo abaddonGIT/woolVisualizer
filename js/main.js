@@ -26,6 +26,15 @@ var w = window,
         MIN: 0.2,
         MAX: 1
     },
+    BIRD_SPEED = {
+        MIN: 2.5,
+        MAX: 3.2
+    },
+    BIRD_JUMP = {
+        MIN: 20,
+        MAX: 30
+    },
+    IMAGES = ['img/red.png','img/ell.png','img/blue.png','img/black.png'],
     COLORS = ['#69D2E7', '#A7DBD8', '#E0E4CC', '#F38630', '#FA6900', '#FF4E50', '#F9D423']; //цвета частиц
 
 
@@ -35,6 +44,8 @@ var w = window,
         canva = null,
         config = null,
         particles = [],
+        rope = null,
+        birds = [],
         audio = null,
         input = d.querySelector('#song'),
         that = this;
@@ -76,7 +87,6 @@ var w = window,
                     _that.node.onaudioprocess = function () {
                         _that.analyser.getByteFrequencyData(_that.bands);
                         if (!_that.audio.paused) {
-                            //console.log(_that.bands);
                             return typeof _that.update === "function" ? _that.update(_that.bands) : 0;
                         }
                     };
@@ -139,7 +149,120 @@ var w = window,
                     this.y = canva.height;
                 }
             }
-        }
+        };
+
+
+        /*
+        * Веревка
+        */
+
+        var Rope = function () {
+            this.init();
+        };
+
+        Rope.prototype = {
+            init: function () {
+                this.x = 0;
+                this.y = canva.height/2;
+                this.deflection = 0.0;
+                this.color = "#000";
+            },
+            draw: function () {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.quadraticCurveTo(canva.width/2, this.y + this.deflection, canva.width, this.y);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+
+                this.move();
+            },
+            move: function () {
+                /*var ln = birds.length;
+                while (ln--) {
+                    var loc = birds[ln];
+                    if (loc.stop && !loc.finish) {
+                        this.deflection += 10;
+                        loc.finish = true;
+                    }
+                }*/
+            }
+        };
+
+        /*
+        * Птички
+        */
+        var Bird = function () {
+            this.init();
+        };
+
+        Bird.prototype = {
+            init: function () {
+                var img = new Image();
+                img.src = that.random(IMAGES);
+                img.width = 100;
+                img.height = 100;
+                this.up = true;
+                this.down = false;
+                this.stop = false;
+                this.finish = false;
+                this.x = canva.width - img.width;
+                this.y = canva.height/2 - img.height;
+                this.speed = that.random(BIRD_SPEED.MIN, BIRD_SPEED.MAX);
+                this.jump = that.random(BIRD_JUMP.MIN, BIRD_JUMP.MAX);
+                this.bord = that.random(300, canva.width); 
+
+                this.img = img;
+            },
+            draw: function () {
+                ctx.save();
+                ctx.beginPath();    
+                ctx.drawImage(this.img, this.x, this.y);
+                ctx.closePath();
+                ctx.restore();
+
+                this.move();
+            },
+            move: function () {
+                if (this.x > this.bord && !this.stop) {
+                    this.x -= this.speed;
+                
+                    if (this.y > canva.height/2 - this.img.height - this.jump && !this.down) {
+                        this.y--;
+                    } else {
+                        this.up = false;
+                        this.down = true;
+                    }
+
+                    if (this.y < canva.height/2 - this.img.height && !this.up) {
+                        this.y += this.speed;
+                    } else {
+                        this.up = true;
+                        this.down = false;
+                    }
+
+                } else {
+                    this.y = canva.height/2 - this.img.height;
+                    this.stop = true;
+
+                }
+
+                //разрешаем стоскновения
+                var ln = birds.length;
+
+                while (ln--) {
+                    var loc = birds[ln];
+
+                    if (this.x > loc.x && (this.x < loc.x + loc.img.width + 10) && this.stop) {//столкновение
+                        this.x++;
+                    }
+
+                }
+            }
+        };
+
         /*
         * Создает конву
         */
@@ -158,28 +281,39 @@ var w = window,
                 particle = new Particle();
                 particles.push(particle);
             }
-            audio = new Analyse();
 
-            input.addEventListener('change', function () {
-                var song = this.value,
-                    fReader = new FileReader();
+            rope = new Rope();
 
-                fReader.readAsDataURL(this.files[0]);
-                fReader.onloadend = function (event) {
-                    var e = event || w.event;
-                    audio.audio.src = e.target.result;
-                    audio.audio.load();
+            for (var i = 0; i < 7; i++) {
+                birds.push(new Bird());
+            }
+
+            try {
+                audio = new Analyse();
+
+                input.addEventListener('change', function () {
+                    var song = this.value,
+                        fReader = new FileReader();
+
+                    fReader.readAsDataURL(this.files[0]);
+                    fReader.onloadend = function (event) {
+                        var e = event || w.event;
+                        audio.audio.src = e.target.result;
+                        audio.audio.load();
+                    };
+                }, false);
+
+                audio.update = function (bands) {
+                    var ln = MAX_PARTICLES;
+
+                    while (ln--) {
+                        var loc = particles[ln];
+                        loc.pulse = bands[loc.band] / 256;
+                    }
                 };
-            }, false);
-
-            audio.update = function (bands) {
-                var ln = MAX_PARTICLES;
-
-                while (ln--) {
-                    var loc = particles[ln];
-                    loc.pulse = bands[loc.band] / 256;
-                }
-            };
+            } catch (e) {
+                throw ('Ваш барузер не поддержывает audio Api');
+            }
             setInterval(that.action, this.config.interval);
         }
         /*
@@ -192,6 +326,13 @@ var w = window,
                 var loc = particles[i];
                 loc.draw();
             }
+            //Рисуем веревку
+            rope.draw();
+            for (var i = 0; i < 7; i++) {
+                var loc = birds[i];
+                loc.draw();
+            }
+            
         }
         /*
         * Чистит конву перед следующей анимацией
