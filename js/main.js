@@ -5,7 +5,7 @@
  * ***************************************************/
 var w = window,
     d = document,
-    MP3_PATH = 'files/test.mp3',
+    MP3_PATH = 'files/test3.mp3',
     MAX_PARTICLES = 50,
     MAX_BIRDS = 10,
     TWO_PI = Math.PI * 2,
@@ -28,8 +28,8 @@ var w = window,
         MAX: 1
     },
     BIRD_SPEED = {
-        MIN: 2.5,
-        MAX: 3.2
+        MIN: 3.5,
+        MAX: 4.2
     },
     BIRD_JUMP = {
         MIN: 20,
@@ -48,6 +48,7 @@ var w = window,
         rope = null,
         birds = [],
         audio = null,
+        freeSpace = w.innerWidth,
         input = d.querySelector('#song'),
         that = this;
 
@@ -207,29 +208,26 @@ var w = window,
                 this.y = canva.height / 2 - img.height;
                 this.speed = that.random(BIRD_SPEED.MIN, BIRD_SPEED.MAX);
                 this.jump = that.random(BIRD_JUMP.MIN, BIRD_JUMP.MAX);
-                this.bord = that.random(200, canva.width - 400);
+                if (this.direction === "right") {
+                    this.bord = canva.width - (freeSpace - 260);
+                } else {
+                    this.bord = canva.width - (freeSpace - 130);
+                }
 
+                freeSpace -= 130;
                 this.img = img;
             },
             draw: function () {
-                var pulse = Math.exp(this.pulse);
+                var pulse = Math.exp(this.pulse) || 1;
 
                 ctx.save();
                 ctx.beginPath();
 
                 if (this.direction === "right" && this.stop) {
                     ctx.scale(-1, 1);
-                    if (pulse) {
-                        ctx.drawImage(this.img, -this.x, this.y, this.img.width * pulse, this.img.height * pulse);
-                    } else {
-                        ctx.drawImage(this.img, -this.x, this.y);
-                    }
+                    ctx.drawImage(this.img, -this.x, this.y, this.img.width * pulse, this.img.height * pulse);
                 } else {
-                    if (pulse) {
-                        ctx.drawImage(this.img, this.x, this.y, this.img.width * pulse, this.img.height * pulse);
-                    } else {
-                        ctx.drawImage(this.img, this.x, this.y);
-                    }
+                    ctx.drawImage(this.img, this.x, this.y, this.img.width * pulse, this.img.height * pulse);
                 }
                 ctx.closePath();
                 ctx.restore();
@@ -237,45 +235,27 @@ var w = window,
             move: function () {
 
                 if (this.x > this.bord && !this.stop) {
-                    this.x -= this.speed;
-
-                    if (this.y > canva.height / 2 - this.img.height - this.jump && !this.down) {
-                        this.y--;
-                    } else {
-                        this.up = false;
-                        this.down = true;
-                    }
-
-                    if (this.y < canva.height / 2 - this.img.height && !this.up) {
-                        this.y += this.speed;
-                    } else {
-                        this.up = true;
-                        this.down = false;
-                    }
-
+                    this.run();
                 } else {
-                    var pulse = Math.exp(this.pulse);
-                    if (pulse) {
-                        this.y = (canva.height / 2 - this.img.height*pulse);
-                    } else {
-                        this.y = canva.height / 2 - this.img.height;
-                    }
                     this.stop = true;
+                    var pulse = Math.exp(this.pulse) || 1;
+                    this.y = (canva.height / 2 - this.img.height*pulse);
                 }
-                //разрешаем стоскновения
-                var ln = birds.length;
-                while (ln--) {
-                    var bird = birds[ln];
+            },
+            run: function () {
+                this.x -= this.speed;
+                if (this.y > canva.height / 2 - this.img.height - this.jump && !this.down) {
+                    this.y--;
+                } else {
+                    this.up = false;
+                    this.down = true;
+                }
 
-                    if (this.direction === "left") {
-                        if (this.x > bird.x && this.x < bird.x + bird.img.width && this.x + 100 < canva.width) {
-                            this.x++;
-                        }
-                    } else {
-                        if (this.x > bird.x && this.x < bird.x + bird.img.width + 70 && this.x + 100 < canva.width) {
-                            this.x++;
-                        }
-                    }
+                if (this.y < canva.height / 2 - this.img.height && !this.up) {
+                    this.y += this.speed;
+                } else {
+                    this.up = true;
+                    this.down = false;
                 }
             }
         };
