@@ -207,7 +207,11 @@ var w = window,
                 this.y = canva.height / 2 - img.height;
                 this.speed = that.random(BIRD_SPEED.MIN, BIRD_SPEED.MAX);
                 this.jump = that.random(BIRD_JUMP.MIN, BIRD_JUMP.MAX);
+<<<<<<< HEAD
+                this.bord = that.random(300, canva.width - 100); 
+=======
                 this.bord = that.random(200, canva.width - 400);
+>>>>>>> b578524e6c9a8a1fefa79003244ff0e5859661ea
 
                 this.img = img;
             },
