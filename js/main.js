@@ -5,7 +5,7 @@
  * ***************************************************/
 var w = window,
     d = document,
-    MP3_PATH = 'files/test3.mp3',
+    MP3_PATH = 'files/test3.ogg',
     MAX_PARTICLES = 50,
     MAX_BIRDS = 10,
     TWO_PI = Math.PI * 2,
@@ -70,7 +70,7 @@ var w = window,
             this.audio.controls = true;
 
             this.context = new AudioContext();
-            this.node = this.context.createJavaScriptNode(2048, 1, 1);
+            this.node = this.context.createScriptProcessor(2048, 1, 1);
             //Анализатор
             this.analyser = this.context.createAnalyser();
             this.analyser.smoothingTimeConstant = SMOOTHING;
@@ -81,6 +81,7 @@ var w = window,
             this.audio.addEventListener('canplay', function () {
                 if (!_that.source) {
                     _that.source = _that.context.createMediaElementSource(_that.audio);
+  
                     _that.source.connect(_that.analyser);
                     _that.analyser.connect(_that.node);
                     _that.node.connect(_that.context.destination);
@@ -94,8 +95,7 @@ var w = window,
                     };
                 }
             });
-            d.body.appendChild(_that.audio);
-
+            
             return this;
         };
 
@@ -180,7 +180,7 @@ var w = window,
                 ctx.restore();
             },
             move: function () {
-                
+
             }
         };
 
@@ -239,7 +239,7 @@ var w = window,
                 } else {
                     this.stop = true;
                     var pulse = Math.exp(this.pulse) || 1;
-                    this.y = (canva.height / 2 - this.img.height*pulse);
+                    this.y = (canva.height / 2 - this.img.height * pulse);
                 }
             },
             run: function () {
@@ -286,6 +286,7 @@ var w = window,
             }
             try {
                 audio = new Analyse();
+                d.body.appendChild(audio.audio);
 
                 input.addEventListener('change', function () {
                     var song = this.value,
