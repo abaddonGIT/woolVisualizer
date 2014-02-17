@@ -77,11 +77,12 @@ var w = window,
             this.analyser.fftSize = FURIE;
 
             this.bands = new Uint8Array(this.analyser.frequencyBinCount);
+            console.log(this.bands);
 
             this.audio.addEventListener('canplay', function () {
                 if (!_that.source) {
                     _that.source = _that.context.createMediaElementSource(_that.audio);
-  
+
                     _that.source.connect(_that.analyser);
                     _that.analyser.connect(_that.node);
                     _that.node.connect(_that.context.destination);
@@ -95,7 +96,7 @@ var w = window,
                     };
                 }
             });
-            
+
             return this;
         };
 
